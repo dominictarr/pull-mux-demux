@@ -7,18 +7,7 @@ var many = require('pull-many')
 var pair = require('pull-pair')
 var pull = require('pull-stream')
 
-function wrap(n) {
-  return function (read) {
-    var ended = null
-    return function (abort, cb) {
-      if(ended) return cb(true)
-      read(abort, function (end, data) {
-        if(end) cb(null, {id: n, end: ended = end, data: null})
-        else    cb(null, {id: n, end: null       , data: data})
-      })
-    }
-  }
-}
+var u = require('./util')
 
 module.exports = function (onConnection) {
 
@@ -34,6 +23,23 @@ module.exports = function (onConnection) {
   //returns a source that reads from many sources
   var sources = many()
 
+  function createPairs (id) {
+    var p = pair()
+    var q = pair()
+    console.log('createPairs', id)
+    if(!streams[id]) {
+      streams[id] = {
+        source: pull(p.source, pull.through(console.log)),
+        sink: pull(pull.through(console.log), q.sink)
+      }
+      _streams[id] = {
+        source: pull(q.source, u.wrap(id)),
+        sink: pull(u.unwrap(id), p.sink)
+      }
+    }
+    sources.add(_streams[id].source)
+  }
+
   //returns a single sink, splits to many sinks.
   var sinks = fork(function (wrapped) {
     console.log('message?')
@@ -41,14 +47,14 @@ module.exports = function (onConnection) {
   }, function (id) {
     console.log('create sink')
     //if id is < 0 then it was created by the remote.
-    if(id > 0) //this stream was ceated locally.
-      return _streams[id]
-    var p = pair()
-    var q = pair()
+    //if(id > 0) //this stream was ceated locally.
+    //  return _streams[id]
 
-    streams[id]  = {source: p.source, sink: q.sink}
-    _streams[id] = {sounce: q.source, sink: p.sink}
-    onConnection(streams[id])
+    var has = !!streams[id]
+
+    createPairs(id)
+
+    if(!has) onConnection(streams[id])
     return _streams[id].sink
   })
 
@@ -60,16 +66,7 @@ module.exports = function (onConnection) {
     //create a new dial-out stream.
     createStream: function () {
       var id = ++created
-      var p = pair(), q = pair()
-      var _stream = _streams[id] = {source: p.source, sink: q.sink}
-      var stream  =  streams[id] = {source: q.source, sink: p.sink}
-
-      console.log('createStream', id)
-      sources.add(pull(
-        _stream.source,
-        wrap(++created),
-        pull.through(console.error)
-      ))
+      createPairs(id)
       //forks is attached when it receives a message.
       return streams[id]
     }

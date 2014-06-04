@@ -27,14 +27,20 @@ module.exports = function (onConnection) {
     var p = pair()
     var q = pair()
     console.log('createPairs', id)
+    //this needs to be negative on responses
+    //so we can handle streams from both sides.
     if(!streams[id]) {
       streams[id] = {
         source: pull(p.source, pull.through(console.log)),
         sink: pull(pull.through(console.log), q.sink)
       }
       _streams[id] = {
+        //this is the 'incoming' stream
+        //it has a negative id. piped into the connection.
         source: pull(q.source, u.wrap(id)),
-        sink: pull(u.unwrap(id), p.sink)
+        //this is the 'outgoing' stream,
+        //it has a positive id.
+        sink: pull(u.unwrap(id * -1), p.sink)
       }
     }
     sources.add(_streams[id].source)
@@ -42,13 +48,10 @@ module.exports = function (onConnection) {
 
   //returns a single sink, splits to many sinks.
   var sinks = fork(function (wrapped) {
-    console.log('message?')
-    return wrapped.id
+    console.log('message?', wrapped.id)
+    return wrapped.id * -1
   }, function (id) {
-    console.log('create sink')
-    //if id is < 0 then it was created by the remote.
-    //if(id > 0) //this stream was ceated locally.
-    //  return _streams[id]
+    console.log('create sink', id, '(recv)')
 
     var has = !!streams[id]
 
@@ -66,6 +69,7 @@ module.exports = function (onConnection) {
     //create a new dial-out stream.
     createStream: function () {
       var id = ++created
+      console.log('createStream', id)
       createPairs(id)
       //forks is attached when it receives a message.
       return streams[id]

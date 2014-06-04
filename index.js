@@ -9,6 +9,8 @@ var pull = require('pull-stream')
 
 var u = require('./util')
 
+var pullFSM = require('./fsm')
+
 module.exports = function (onConnection) {
 
   var created = 0
@@ -24,12 +26,12 @@ module.exports = function (onConnection) {
   var sources = many()
 
   function createPairs (id) {
-    var p = pair()
-    var q = pair()
     console.log('createPairs', id)
     //this needs to be negative on responses
     //so we can handle streams from both sides.
     if(!streams[id]) {
+      var p = pair()
+      var q = pair()
       streams[id] = {
         source: pull(p.source, pull.through(console.log)),
         sink: pull(pull.through(console.log), q.sink)
@@ -37,21 +39,24 @@ module.exports = function (onConnection) {
       _streams[id] = {
         //this is the 'incoming' stream
         //it has a negative id. piped into the connection.
-        source: pull(q.source, u.wrap(id)),
+        source: pull(q.source, pullFSM(), u.wrap(id)),
         //this is the 'outgoing' stream,
         //it has a positive id.
-        sink: pull(u.unwrap(id * -1), p.sink)
+        sink:
+          pull(
+            u.unwrap(id*-1),
+            pull.through(console.log.bind(null, '?>')),
+            p.sink
+          )
       }
-    }
     sources.add(_streams[id].source)
+    }
   }
 
   //returns a single sink, splits to many sinks.
   var sinks = fork(function (wrapped) {
-    console.log('message?', wrapped.id)
     return wrapped.id * -1
   }, function (id) {
-    console.log('create sink', id, '(recv)')
 
     var has = !!streams[id]
 

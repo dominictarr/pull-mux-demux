@@ -16,45 +16,31 @@ interleave.test(function (async) {
 
   var seen = []
   var A = mx()
-  var B = mx(function (stream) {
-    console.log('connection!', stream)
+  var B = mx(async(function (stream) {
     //fake echo server
     pull(
       stream.source,
       pull.through(function (data) {
         seen.push(data)
       }),
-    pullFSM(),
-      async.through(),
-    pullFSM(),
+      async.through('echo'),
       stream.sink
     )
-  })
+  },'connection'))
 
-  pull(A,     pullFSM(),
-async.through(),     
-log('>>'), B,     pullFSM(),
-log('<<'), async.through(), A)
+  pull(
+    A,
+    async.through('A->B'),
+    B,
+    async.through('A<-B'),
+    A
+  )
 
   pull(
     pull.values([1,2,3]),
-    async.through(),
-//    function (read) {
-//      var reading = false
-//      return function (abort, cb) {
-//        if(reading) throw new Error('already reading')
-//        reading = true
-//        read(abort, function (end, data) {
-//          reading = false
-//          console.log('READ', data, end)
-//          cb(end, data)
-//        })
-//      }
-//    },
-    pullFSM(),
+    async.through('source'),
     A.createStream(),
-//    async.through(),
-    pullFSM(),
+    async.through('sink'),
     pull.collect(function (err, ary) {
       console.log(ary, '?')
       assert.deepEqual(ary, seen)

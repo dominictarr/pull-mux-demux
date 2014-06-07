@@ -18,7 +18,7 @@ interleave.test(function (async) {
         pull.through(function (data) {
           seen.push(data)
         }),
-        async.through(),
+//        async.through(),
         stream.sink
       )
     }
@@ -27,35 +27,52 @@ interleave.test(function (async) {
   var n = 2
   var seenB = []
   var seenA = []
-  var A = mx(echo(seenA))
-  var B = mx(echo(seenB))
+  var A = mx(function (stream) {
+    pull(
+      stream.source,
+      async.through('echo'),
+      pull.through(function (d) { seenA.push(d) }),
+      stream.sink
+    )
+  })
+  var B = mx(function (stream) {
+    pull(stream.source, pull.collect(function (err, ary) {
+      assert.deepEqual(ary, [1,2,3])
+      done()
+    }))
+  })
 
-  pull(A, async.through(),
+  pull(A,
+    async.through('[A->B]'),
     pull.through(console.log.bind(null, '>>')),
     B,
     pull.through(console.log.bind(null, '<<')),
-    async.through(), A)
+    async.through('[A<-B]'),
+    A)
 
   pull(
     pull.values([1,2,3]),
-    async.through(),
-    A.createStream(),
-    async.through(),
-    pull.collect(function (err, ary) {
-      console.log(ary, '?', seenB)
-      assert.deepEqual(ary, seenB)
-      assert.deepEqual(ary, [1,2,3])
-      done()
-    })
+//    async.through(),
+    A.createStream().sink
+//    ,
+//    async.through(),
+//    pull.collect(function (err, ary) {
+//      console.log(ary, '?', seenB)
+//      assert.deepEqual(ary, seenB)
+//      assert.deepEqual(ary, [1])
+//      done()
+//    })
   )
 
   pull(
     pull.values([4,5,6]),
-    async.through(),
+    async.through('even'),
     B.createStream(),
-    async.through(),
+    async.through('collect'),
+    pull.through(console.log.bind(null, '>>>>>>>>>>')),
     pull.collect(function (err, ary) {
       console.log(ary, '?', seenA)
+      if(err) throw err
       assert.deepEqual(ary, seenA)
       assert.deepEqual(ary, [4,5,6])
       done()
@@ -64,6 +81,7 @@ interleave.test(function (async) {
 
   function done () {
     if(--n) return
+    console.log(seenA)
     async.done()
   }
 

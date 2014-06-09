@@ -35,11 +35,33 @@ interleave.test(function (async) {
       stream.sink
     )
   })
+
   var B = mx(function (stream) {
-    pull(stream.source, pull.collect(function (err, ary) {
-      assert.deepEqual(ary, [1,2,3])
-      done()
-    }))
+    pull(
+      stream.source,
+//      eagre(),
+//      pull.highWaterMark(2),
+      pull.map(function (d) {
+        return d*10
+      }),
+      pull.collect(function (err, ary) {
+        pull(pull.values(ary), stream.sink)
+      })
+//      stream.sink
+    )
+
+//    pull(
+//      stream.source,
+//      pull.map(function (data) {
+//        return data*10
+//      }),
+//      stream.sink
+//    )
+//    pull(stream.source, pull.collect(function (err, ary) {
+//      assert.deepEqual(ary, [1,2,3])
+//      done()
+//    }))
+//    pull(pull.values([10,20,30]), stream.sink)
   })
 
   pull(A,
@@ -53,7 +75,12 @@ interleave.test(function (async) {
   pull(
     pull.values([1,2,3]),
 //    async.through(),
-    A.createStream().sink
+    A.createStream(),
+    //.sink
+    pull.collect(function (err, ary) {
+      assert.deepEqual(ary, [10,20,30])
+      done()
+    })
 //    ,
 //    async.through(),
 //    pull.collect(function (err, ary) {

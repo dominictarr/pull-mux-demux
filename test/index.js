@@ -42,7 +42,6 @@ interleave.test(function (async) {
     A.createStream(),
     async.through('sink'),
     pull.collect(function (err, ary) {
-      console.log(ary, '?')
       assert.deepEqual(ary, seen)
       assert.deepEqual(ary, [1,2,3])
       async.done()

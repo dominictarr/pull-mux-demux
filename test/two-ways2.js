@@ -25,7 +25,6 @@ interleave.test(function (async) {
 
   function echo (seen, name) {
     return function (stream, id) {
-      console.log('connection!', id)
       //fake echo server
       pull(
         stream.source,
@@ -34,7 +33,6 @@ interleave.test(function (async) {
           return d*10
         }),
         async.through(name),
-        log('>>>>'+name),
         stream.sink
       )
     }//, 'connect:'+name)
@@ -46,20 +44,19 @@ interleave.test(function (async) {
   var A = mx(echo(seenA, 'echoA'), 'A')
   var B = mx(echo(seenB, 'echoB'), 'B')
 
-  pull(A,
+  pull(
+    A,
     async.through('[A->B]'),
-    pull.through(console.log.bind(null, 'A->B >>')),
     B,
-    pull.through(console.log.bind(null, 'A<-B <<')),
     async.through('[A<-B]'),
-    A)
+    A
+  )
 
   pull(
     pull.values([1, 2, 3]),
     async.through('oddA'),
     A.createStream(),
     async.through('collectA'),
-    pull.through(console.log.bind(null, 'A>>>>>>>>>>')),
     pull.collect(function (err, ary) {
       console.log(ary, '?', seenB)
       assert.deepEqual(ary, seenB)
@@ -73,9 +70,7 @@ interleave.test(function (async) {
     async.through('evenB'),
     B.createStream(),
     async.through('collectB'),
-    log('>>>>B.collect'),
     pull.collect(function (err, ary) {
-      console.log(ary, '?', seenA)
       if(err) throw err
       assert.deepEqual(ary, seenA)
       assert.deepEqual(ary, [40, 50, 60])

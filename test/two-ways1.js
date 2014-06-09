@@ -11,14 +11,12 @@ interleave.test(function (async) {
 
   function echo (seen) {
     return function (stream) {
-      console.log('connection!', stream)
       //fake echo server
       pull(
         stream.source,
         pull.through(function (data) {
           seen.push(data)
         }),
-//        async.through(),
         stream.sink
       )
     }
@@ -39,29 +37,14 @@ interleave.test(function (async) {
   var B = mx(function (stream) {
     pull(
       stream.source,
-//      eagre(),
-//      pull.highWaterMark(2),
       pull.map(function (d) {
         return d*10
       }),
       pull.collect(function (err, ary) {
         pull(pull.values(ary), stream.sink)
       })
-//      stream.sink
     )
 
-//    pull(
-//      stream.source,
-//      pull.map(function (data) {
-//        return data*10
-//      }),
-//      stream.sink
-//    )
-//    pull(stream.source, pull.collect(function (err, ary) {
-//      assert.deepEqual(ary, [1,2,3])
-//      done()
-//    }))
-//    pull(pull.values([10,20,30]), stream.sink)
   })
 
   pull(A,
@@ -74,21 +57,11 @@ interleave.test(function (async) {
 
   pull(
     pull.values([1,2,3]),
-//    async.through(),
     A.createStream(),
-    //.sink
     pull.collect(function (err, ary) {
       assert.deepEqual(ary, [10,20,30])
       done()
     })
-//    ,
-//    async.through(),
-//    pull.collect(function (err, ary) {
-//      console.log(ary, '?', seenB)
-//      assert.deepEqual(ary, seenB)
-//      assert.deepEqual(ary, [1])
-//      done()
-//    })
   )
 
   pull(
@@ -96,9 +69,7 @@ interleave.test(function (async) {
     async.through('even'),
     B.createStream(),
     async.through('collect'),
-    pull.through(console.log.bind(null, '>>>>>>>>>>')),
     pull.collect(function (err, ary) {
-      console.log(ary, '?', seenA)
       if(err) throw err
       assert.deepEqual(ary, seenA)
       assert.deepEqual(ary, [4,5,6])

@@ -1,5 +1,3 @@
-
-
 var mux = require('../')
 var pull = require('pull-stream')
 var assert = require('assert')
@@ -13,13 +11,6 @@ require('interleavings').test(function (async) {
       stream.sink
 
     )
-
-//    pull(
-//      pull.values([5,6,7]),
-//     pull.through(console.log.bind(null, 'echo:')),
-//      stream.sink
-//    )
-
   })
 
   var n = 1, all
@@ -31,15 +22,10 @@ require('interleavings').test(function (async) {
     async.through('collect'),
     pull.collect(function (err, ary) {
       all = ary
-      console.log('collect', err, ary)
       done()
     })
   )
 
-//  stream.sink(function (abort, cb) {
-//    cb(true)
-//  })
-//
   pull(
     pull.values([
       {id:  1, end: false, data: 1},
@@ -52,15 +38,8 @@ require('interleavings').test(function (async) {
       {id: -1, end:  true, data: null},
       {id:  1, end:  true, data: null}
     ]),
-  //  async.through('receive'),
     x,
-//    async.through('send'),
-    pull.through(function (d) {
-      console.log('x>', d)
-//      done()
-    }),
-    pull.collect()
-//    pull.drain()
+    pull.drain()
   )
 
   function done () {

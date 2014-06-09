@@ -22,8 +22,6 @@ interleave.test(function (async) {
   var received = false
   var mx = mux(function (stream) {
     received = true
-    console.log('RECEIVED')
-    console.log('=====================================')
     pull(
       stream.source,
       log('echo'),
@@ -48,6 +46,4 @@ interleave.test(function (async) {
   )
   console.log('pull(', mx.source, mx.sink)
   pull(mx.source, async.through('loop'), log('loop'), mx.sink)
-
-
 })

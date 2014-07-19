@@ -8,12 +8,19 @@
     "url": "git://github.com/dominictarr/pull-mux-demux.git"
   },
   "dependencies": {
+    "pull-fork": "^2.0.0",
+    "pull-many": "^1.0.4",
+    "pull-pair": "^1.0.0",
+    "pull-stream": "^2.23.1"
   },
   "devDependencies": {
+    "tape": "^2.13.3",
+    "pull-msgpack": "git://github.com/alligator-io/pull-msgpack.git",
+    "stream-to-pull-stream": "^1.4.1"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://dominictarr.com)",
-  "license": "MIT"  
+  "license": "MIT"
 }

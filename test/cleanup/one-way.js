@@ -27,14 +27,14 @@ interleave.test(function(async) {
 
 function isEmpty(mx, name) {
   assert(
-    mx.streams.length === 0,
-    name + '.streams is not empty '+
+    Object.keys(mx.streams).length === 0,
+    name + '.streams is not empty\n'+
     util.inspect(mx.streams)
   )
 
   assert(
-    mx._streams.length === 0,
-    name + '._streams is not empty ' + 
+    Object.keys(mx._streams).length === 0,
+    name + '._streams is not empty\n' +
     util.inspect(mx._streams)
   )
 }

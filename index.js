@@ -68,7 +68,9 @@ module.exports = function (onConnection, name) {
     //outer streams that are routed over network.
     source: sources,
     sink: sinks,
-
+    //exposed for testing purposes.
+    streams: streams,
+    _streams: _streams,
     //create a new dial-out stream.
     createStream: function () {
       var id = ++created
